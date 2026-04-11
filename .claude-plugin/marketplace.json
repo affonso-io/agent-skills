@@ -1,0 +1,30 @@
+{
+  "name": "affiliate-skills",
+  "owner": {
+    "name": "Silvestro",
+    "url": "https://affonso.io"
+  },
+  "metadata": {
+    "description": "A collection of Claude Code skills to simplify affiliate program management and integration",
+    "version": "1.0.0",
+    "repository": "https://github.com/zilvestro/affiliate-skills"
+  },
+  "plugins": [
+    {
+      "name": "affiliate-skills",
+      "description": "Affiliate skills for Claude Code — Integration, Tracking, and Optimization.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/affonso-setup",
+        "./skills/stripe-affiliate-integration",
+        "./skills/polar-affiliate-integration",
+        "./skills/dodo-affiliate-integration",
+        "./skills/creem-affiliate-integration",
+        "./skills/paddle-affiliate-integration",
+        "./skills/custom-affiliate-integration",
+        "./skills/embedded-affiliate-dashboard"
+      ]
+    }
+  ]
+}
