@@ -7,7 +7,7 @@
   "metadata": {
     "description": "A collection of Claude Code skills to simplify affiliate program management and integration",
     "version": "1.0.0",
-    "repository": "https://github.com/zilvestro/affiliate-skills"
+    "repository": "https://github.com/affonso-io/agent-skills"
   },
   "plugins": [
     {
@@ -16,7 +16,8 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/affonso-setup",
+        "./skills/affonso-affiliate-program-setup",
+        "./skills/affonso-affiliate-program-cli",
         "./skills/stripe-affiliate-integration",
         "./skills/polar-affiliate-integration",
         "./skills/dodo-affiliate-integration",

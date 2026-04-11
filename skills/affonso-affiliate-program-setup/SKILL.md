@@ -49,7 +49,7 @@ Based on the detected provider, determine the integration method:
 ### Stripe
 Search for:
 - `stripe.checkout.sessions.create` → **Checkout API**
-- `buy.stripe.com` or `href*="buy.stripe.com"` in HTML/JSX → **Payment Links**
+- `buy.stripe.com` in HTML/JSX → **Payment Links**
 - `<stripe-buy-button` → **Buy Button**
 - `<stripe-pricing-table` → **Pricing Tables**
 
@@ -150,11 +150,11 @@ Affonso Affiliate Tracking Setup Complete
 
 Provider: {provider}
 Method: {method}
-Tracking Script: ✓ Installed
-Signup Tracking: ✓/✗
-GTM Integration: ✓/✗/N/A
-GDPR Consent: ✓/✗/N/A
-Referral Passing: ✓ Configured
+Tracking Script: Installed
+Signup Tracking: Yes/No
+GTM Integration: Yes/No/N/A
+GDPR Consent: Yes/No/N/A
+Referral Passing: Configured
 
 Next steps:
 1. Test with ?atp=test parameter
