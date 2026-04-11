@@ -84,8 +84,8 @@ Embed Affonso's white-label affiliate dashboard into your web app via iframe. In
 agent-skills/
 ├── .claude-plugin/marketplace.json
 ├── skills/
-│   ├── affonso-affiliate-program-setup/   # Auto-detect & full setup
-│   ├── affonso-affiliate-program-cli/    # CLI management (works with Claude Code + OpenClaw)
+│   ├── affonso-setup/                    # Auto-detect & full setup
+│   ├── affonso-cli/                      # CLI management (works with Claude Code + OpenClaw)
 │   ├── stripe-affiliate-integration/     # Stripe
 │   ├── polar-affiliate-integration/      # Polar
 │   ├── dodo-affiliate-integration/       # Dodo Payments

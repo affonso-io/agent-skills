@@ -16,8 +16,8 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/affonso-affiliate-program-setup",
-        "./skills/affonso-affiliate-program-cli",
+        "./skills/affonso-setup",
+        "./skills/affonso-cli",
         "./skills/stripe-affiliate-integration",
         "./skills/polar-affiliate-integration",
         "./skills/dodo-affiliate-integration",
