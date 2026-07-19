@@ -54,20 +54,22 @@ This dashboard connection is required for Affonso to receive and attribute payme
 ## Workflow Decision Tree
 
 ```
-1. Install Tracking Script
+1. Connect Polar to Affonso if it is not connected yet
+
+2. Install Tracking Script
    |-- Uses GTM? -> See GTM Integration Guide
    |-- Has Cookie Consent? -> See GDPR Consent Guide
    +-- Neither -> Direct script installation
 
-2. Track Signups (Optional)
+3. Track Signups (Optional)
    +-- Add signup tracking code
 
-3. Pass Data to Polar
+4. Pass Data to Polar
    |-- Checkout API -> See Polar Checkout API Guide
    |-- Payment Links -> See Payment Links Guide
    +-- Don't Know -> Help identify integration method
 
-4. Test Integration
+5. Test Integration
    +-- Verify tracking works end-to-end
 ```
 

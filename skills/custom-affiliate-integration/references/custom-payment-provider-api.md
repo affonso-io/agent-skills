@@ -168,6 +168,17 @@ curl -X POST "https://api.affonso.io/v1/conversions/conv_123/refund" \
 
 If the original sale used `POST /commissions`, persist the returned commission ID when the sale is created and update that commission record manually in the user's refund handler.
 
+```bash
+curl -X PUT "https://api.affonso.io/v1/commissions/com_123" \
+  -H "Authorization: Bearer sk_live_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sale_amount": 49.50,
+    "commission_amount": 9.90,
+    "sales_status": "partial_refunded"
+  }'
+```
+
 ## Idempotency
 
 Use a stable upstream identifier for `external_event_id`:

@@ -189,11 +189,14 @@ If the provider uses a different field, adapt the code to whatever metadata/cust
 
 Choose this when the backend knows a revenue event happened and the user wants Affonso to apply the team's incentive rules automatically.
 
+Include `referral_id` on the first conversion unless the billing customer is already mapped to an existing Affonso referral.
+
 ```bash
 curl -X POST "https://api.affonso.io/v1/conversions" \
   -H "Authorization: Bearer sk_live_your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
+    "referral_id": "ref_123",
     "customer_id": "cust_123",
     "sale_amount": 99.00,
     "sale_amount_currency": "USD",
@@ -310,6 +313,19 @@ curl -X POST "https://api.affonso.io/v1/conversions/conv_123/refund" \
 ```
 
 If the integration uses manual `POST /commissions`, the backend must persist the created commission ID and update that commission manually as part of refund handling.
+
+Example manual commission refund update:
+
+```bash
+curl -X PUT "https://api.affonso.io/v1/commissions/com_123" \
+  -H "Authorization: Bearer sk_live_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sale_amount": 49.50,
+    "commission_amount": 9.90,
+    "sales_status": "partial_refunded"
+  }'
+```
 
 ## Step 7: Verify The Integration
 
