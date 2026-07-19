@@ -1,94 +1,95 @@
 ---
 name: custom-affiliate-integration
-description: Set up Affonso affiliate program tracking with any payment provider using the REST API. Use this skill when the user wants to implement an affiliate program with a payment provider that is not Stripe, Paddle, Polar, Creem, or Dodo Payments — such as Lemon Squeezy, Gumroad, Razorpay, Paystack, Xendit, Flutterwave, or any custom billing system. Handles tracking script installation, webhook processing, and manual commission creation via the Affonso API.
+description: Set up Affonso affiliate tracking with any payment provider or custom backend using Affonso's API. Use this skill whenever the user does not use Stripe, Paddle, Polar, Creem, or Dodo Payments, or when they want to bypass native integrations and wire Affonso through their own backend. Handles tracking script installation, referral propagation, choosing between `/conversions`, `/events`, and `/commissions`, webhook processing, refunds, signup tracking, GTM, and GDPR consent.
 ---
 
-# Custom Payment Provider Affiliate Integration
+# Custom / API Affiliate Integration
 
-This skill guides you through setting up Affonso affiliate tracking with any payment provider using the Affonso REST API.
+This skill covers the fully custom integration path for Affonso.
 
-## Overview
+Use it when the user:
 
-Affonso is an affiliate program platform that tracks referrals and commissions. This skill helps implement:
+- uses a provider without a native Affonso integration
+- wants to keep their existing billing stack and send trusted backend events to Affonso
+- wants AI to implement the integration end-to-end with Affonso's API
 
-1. **Tracking script installation** - Monitor affiliate traffic and conversions
-2. **Custom payment provider integration** - Pass referral data to your payment provider and create commissions via the Affonso API
-3. **Optional features** - Signup tracking, GTM integration, GDPR compliance
+## Recommended Path
 
-**Important:** With custom payment providers, Affonso does NOT auto-calculate commissions. The developer must calculate and submit commission amounts manually via the Affonso API.
+Prefer Affonso's server-side tracking API when the user's backend already knows what happened.
 
-## Prerequisites & Information Gathering
+- Use `POST /conversions` when Affonso should calculate commissions automatically.
+- Use `POST /events` when the backend sends normalized lifecycle events such as lead, trial, milestone, or conversion.
+- Use `POST /commissions` only when the exact commission amount is already known and must be submitted manually.
+- Use `POST /conversions/{id}/refund` for refund handling when the original sale was created through `POST /conversions`.
 
-Before beginning implementation, gather the following information by asking the user:
+Read both of these before implementing:
 
-### Required Information
+- [Server-Side Tracking Docs](https://docs.affonso.io/api/server-side-tracking)
+- [Custom Payment Provider API Guide](references/custom-payment-provider-api.md)
 
-1. **Program ID**: Ask "What is your Affonso program ID? You can find it at https://affonso.io/app/affiliate-program"
+Important: this custom/API path does not require a native payment-provider connection in the Affonso dashboard. The agent should implement the backend flow directly with the user's Affonso API key.
 
-2. **Cookie Duration**: Ask "How many days should the affiliate tracking cookie persist? (Common values: 30, 60, 90 days)"
+## Information To Gather
 
-3. **Payment Provider**: Ask "What payment provider do you use?" (e.g., Lemon Squeezy, Gumroad, Razorpay, Paystack, Xendit, Flutterwave, or another provider)
+Before writing code, gather or infer:
 
-4. **Payment Integration Method**: Ask "How do you handle payments?" Provide options:
-   - Payment provider SDK (client-side)
-   - Payment provider API (server-side)
-   - Hosted checkout page (redirect)
-   - Embedded checkout widget
-   - I don't know / Need help determining this
+1. **Program ID**: "What is your Affonso program ID? You can find it at https://affonso.io/app/affiliate-program"
+2. **Affonso API key**: Confirm the backend can call `https://api.affonso.io/v1/*`
+3. **Payment provider / billing system**: Lemon Squeezy, Gumroad, Chargebee, Razorpay, Paystack, Xendit, Flutterwave, custom Stripe wrapper, in-house billing, etc.
+4. **Checkout architecture**: Hosted checkout, embedded widget, provider SDK, backend-created sessions, or a fully custom billing flow
+5. **Stable identifier**: Whether the backend has `external_user_id`, `customer_id`, or can persist `referral_id`
+6. **Webhook/events source**: Which backend event confirms signup, trial, purchase, renewal, or refund
+7. **Cookie duration**
+8. **Google Tag Manager**
+9. **Cookie consent / GDPR**
+10. **Signup tracking requirement**
+11. **Commission model**: Whether Affonso should calculate commissions from program incentives, or the backend should send exact commission amounts manually
 
-5. **Google Tag Manager**: Ask "Do you use Google Tag Manager to manage scripts on your website?"
-
-6. **Cookie Consent Banner**: Ask "Do you use a cookie consent banner or need GDPR compliance?" If yes, follow up with "Which cookie consent platform do you use?" (e.g., Cookiebot, OneTrust, CookieYes, custom solution)
-
-### Optional Features
-
-7. **Signup Tracking**: Ask "Do you want to track user signups in addition to purchases? (Recommended - provides better insights on affiliate performance)"
-
-## Workflow Decision Tree
+## Workflow
 
 ```
-1. Install Tracking Script
-   ├─ Uses GTM? → See GTM Integration Guide
-   ├─ Has Cookie Consent? → See GDPR Consent Guide
-   └─ Neither → Direct script installation
+1. Install the Affonso tracking script
+   |- Uses GTM? -> Read the GTM guide
+   |- Has cookie consent? -> Read the GDPR guide
+   +- Neither -> Install directly in <head>
 
-2. Track Signups (Optional)
-   └─ Add signup tracking code
+2. Decide which identifier the backend will send
+   |- external_user_id -> Preferred when available
+   |- referral_id -> Best when captured at checkout time
+   +- customer_id -> Good when provider customer IDs are stable
 
-3. Pass Referral Data to Payment Provider
-   ├─ Frontend approach → Use window.affonso_referral
-   └─ Backend approach → Read affonso_referral cookie
+3. Pass the referral identifier through checkout metadata
+   |- Client-side checkout -> Use window.affonso_referral
+   +- Server-side checkout -> Read affonso_referral from cookies
 
-4. Handle Webhooks
-   ├─ Extract referral ID from metadata
-   ├─ Update referral status via API
-   └─ Create commission via API
+4. Implement backend event ingestion
+   |- /conversions -> Affonso calculates commissions
+   |- /events -> Lifecycle + normalized conversion events
+   +- /commissions -> Manual commission amounts
 
-5. Handle Refunds
-   └─ Update commission for full/partial refunds
+5. Implement refunds
+   |- /conversions/{id}/refund -> Preferred for conversion-based flows
+   +- Update commission manually -> Only for manual /commissions flows
+
+6. Test the end-to-end flow
 ```
 
 ## Step 1: Install Tracking Script
 
-The tracking script monitors affiliate traffic and creates the `affonso_referral` cookie that gets passed to your payment provider.
+The tracking script captures affiliate attribution and exposes it to the app as:
 
-### Decision: GTM vs Direct Installation
+- the `affonso_referral` cookie
+- `window.affonso_referral` on the client
 
-**If user uses Google Tag Manager:**
+### GTM vs Direct Installation
+
+If the user uses Google Tag Manager:
+
 - Read and follow the [GTM Integration Guide](references/gtm-integration.md)
-- This includes instructions for creating the GTM tag, setting triggers, and publishing
 
-**If user does NOT use GTM:**
-- Continue with direct script installation below
-
-### Direct Script Installation
-
-#### Basic Installation (No Cookie Consent)
-
-Add this script to the website's `<head>` tag:
+If the user does not use GTM, install this directly in the site's `<head>`:
 
 ```html
-<!-- Place in <head> tag -->
 <script
   async
   defer
@@ -98,18 +99,8 @@ Add this script to the website's `<head>` tag:
 ></script>
 ```
 
-- Replace `YOUR_PUBLIC_PROGRAM_ID` with the user's program ID
-- Replace `YOUR_COOKIE_DURATION` with the cookie duration (e.g., `30` for 30 days)
+If the user requires consent mode, read [GDPR Consent Guide](references/gdpr-consent.md) and use:
 
-#### GDPR/Cookie Consent Installation
-
-If the user has a cookie consent banner, read and follow the [GDPR Consent Guide](references/gdpr-consent.md) which includes:
-- How to enable consent mode with `data-requires-consent="true"`
-- Integration code for popular consent platforms (Cookiebot, OneTrust, CookieYes, etc.)
-- URL parameter propagation requirements
-- Testing consent-based tracking
-
-**Consent-enabled script:**
 ```html
 <script
   async
@@ -121,65 +112,67 @@ If the user has a cookie consent banner, read and follow the [GDPR Consent Guide
 ></script>
 ```
 
-Then add consent callback integration based on their consent platform (see GDPR guide).
+## Step 2: Track Signups When Useful
 
-## Step 2: Track User Signups (Optional)
-
-If the user wants to track signups, add this code after their user registration logic:
+If the user wants signup attribution in addition to paid conversions and already uses the browser pixel, add:
 
 ```javascript
-// After successful user registration — basic usage
-window.Affonso.signup(userEmail);
-
-// Or with advanced options for richer tracking
 window.Affonso.signup({
   email: userEmail,
   externalUserId: userId,
-  name: userName
+  name: userName,
 });
 ```
 
-**Benefits of signup tracking:**
-- See which affiliates drive the most registrations
-- Calculate conversion rates from clicks to signups
-- Optimize funnel based on affiliate performance
+Prefer including `externalUserId` when the product has a durable internal user ID. That same ID can later be reused for server-side events.
 
-## Step 3: Pass Referral Data to Payment Provider
+If the user wants to record the signup from their backend instead of the browser, use `POST /v1/signups`. This endpoint is the server-side equivalent of `Affonso.signup()` and requires the original `click_id` from `POST /v1/clicks`:
 
-The tracking script creates an `affonso_referral` cookie that must be passed to your payment provider as metadata. There are two approaches depending on your architecture.
+```bash
+curl -X POST "https://api.affonso.io/v1/signups" \
+  -H "Authorization: Bearer sk_live_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "click_id": "ref_clk_xyz789",
+    "email": "jane@example.com",
+    "external_user_id": "user_42",
+    "name": "Jane Doe"
+  }'
+```
 
-### Frontend Approach
+Use `POST /v1/signups` when the backend owns the signup event. Use `POST /events` only when the team wants a normalized event pipeline and the corresponding identifiers already resolve to the same referral in Affonso.
 
-Use `window.affonso_referral` to read the referral ID on the client side and include it when creating a checkout or payment:
+## Step 3: Pass Referral Data Through Checkout
+
+The backend needs a way to connect the later billing event back to the original referral.
+
+### Client-Side Checkout
 
 ```javascript
-// Read the referral ID from the global variable
-const referralId = window.affonso_referral;
+const referralId = window.affonso_referral || '';
 
-// Pass it to your payment provider's checkout as metadata
 createCheckout({
-  metadata: { affonso_referral: referralId }
+  metadata: {
+    affonso_referral: referralId,
+  },
 });
 ```
 
-### Backend Approach
-
-Read the `affonso_referral` cookie from the incoming request and pass it to the payment provider server-side:
+### Server-Side Checkout
 
 ```javascript
-// Node.js / Express example
 const referralId = req.cookies['affonso_referral'] || '';
 
 const checkout = await paymentProvider.createCheckout({
-  metadata: { affonso_referral: referralId }
+  metadata: {
+    affonso_referral: referralId,
+  },
 });
 ```
 
-### Provider-Specific Metadata Fields
+### Common Metadata Field Names
 
-Different payment providers use different field names for custom metadata:
-
-| Provider | Metadata Field |
+| Provider | Field |
 |---|---|
 | Lemon Squeezy | `custom_data` or `checkout_data.custom` |
 | Gumroad | `custom_fields` |
@@ -188,55 +181,113 @@ Different payment providers use different field names for custom metadata:
 | Xendit | `metadata` |
 | Flutterwave | `meta` |
 
-Adapt the examples above to use the correct field name for the user's payment provider.
+If the provider uses a different field, adapt the code to whatever metadata/custom-data mechanism that provider supports.
 
-For detailed API examples and complete webhook handler code, read the [Custom Payment Provider API Guide](references/custom-payment-provider-api.md).
+## Step 4: Choose the Affonso API Endpoint
 
-## Step 4: Handle Webhooks
+### Use `POST /conversions` by default
 
-Set up a webhook endpoint to receive payment events from your payment provider. When a payment succeeds, extract the referral ID from the metadata and use the Affonso API to update the referral and create a commission.
+Choose this when the backend knows a revenue event happened and the user wants Affonso to apply the team's incentive rules automatically.
 
-### Webhook Handler
+Include `referral_id` on the first conversion unless the billing customer is already mapped to an existing Affonso referral.
+
+```bash
+curl -X POST "https://api.affonso.io/v1/conversions" \
+  -H "Authorization: Bearer sk_live_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "referral_id": "ref_123",
+    "customer_id": "cust_123",
+    "sale_amount": 99.00,
+    "sale_amount_currency": "USD",
+    "external_event_id": "invoice_123",
+    "sales_status": "complete",
+    "is_subscription": true,
+    "interval": "monthly"
+  }'
+```
+
+### Use `POST /events` for normalized backend events
+
+Choose this when the backend wants one endpoint for lead, trial, milestone, and conversion tracking.
+
+```bash
+curl -X POST "https://api.affonso.io/v1/events" \
+  -H "Authorization: Bearer sk_live_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event_name": "trial_started",
+    "event_type": "trial",
+    "external_user_id": "usr_104982",
+    "external_event_id": "evt_trial_001"
+  }'
+```
+
+### Use `POST /commissions` only for manual commission flows
+
+Choose this only if the backend must send the exact commission amount instead of letting Affonso calculate it.
+
+```bash
+curl -X POST "https://api.affonso.io/v1/commissions" \
+  -H "Authorization: Bearer sk_live_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "referral_id": "ref_123",
+    "sale_amount": 99.00,
+    "commission_amount": 19.80,
+    "sale_amount_currency": "USD",
+    "commission_currency": "USD",
+    "payment_intent_id": "pay_123",
+    "is_subscription": false,
+    "sales_status": "complete"
+  }'
+```
+
+### Identifier Choice
+
+Prefer identifiers in this order:
+
+1. `external_user_id` when the product has a stable internal user ID
+2. `referral_id` when the checkout flow already captured the Affonso referral
+3. `customer_id` when matching against the billing provider is the cleanest option
+
+If multiple identifiers are sent, they must all resolve to the same referral.
+
+### Idempotency
+
+Always send a stable `external_event_id` on retryable backend events such as:
+
+- order ID
+- invoice ID
+- checkout session ID
+- payment event ID
+
+Reuse the exact same `external_event_id` on retries.
+
+## Step 5: Implement Webhooks or Backend Event Handlers
+
+The agent should wire the user's existing payment-success and refund events into Affonso.
+
+For a conversion-based flow:
 
 ```javascript
 app.post('/webhooks/payment', async (req, res) => {
   const event = req.body;
 
-  // Extract the referral ID from metadata (adjust field name for your provider)
-  const referralId = event.data.metadata?.affonso_referral;
-  if (!referralId) return res.json({ received: true });
-
-  // 1. Update referral status to "customer"
-  await fetch(`https://api.affonso.io/v1/referrals/${referralId}`, {
-    method: 'PUT',
-    headers: {
-      'Authorization': 'Bearer sk_live_your_api_key',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      email: event.data.customer_email,
-      customer_id: event.data.customer_id,
-      status: 'customer',
-      name: event.data.customer_name,
-    }),
-  });
-
-  // 2. Create a commission (you must calculate the amount yourself)
-  await fetch('https://api.affonso.io/v1/commissions', {
+  await fetch('https://api.affonso.io/v1/conversions', {
     method: 'POST',
     headers: {
-      'Authorization': 'Bearer sk_live_your_api_key',
+      Authorization: `Bearer ${process.env.AFFONSO_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      referral_id: referralId,
+      customer_id: event.data.customer_id,
+      referral_id: event.data.metadata?.affonso_referral,
+      external_event_id: event.data.id,
       sale_amount: event.data.amount,
-      commission_amount: event.data.amount * 0.20, // Example: 20% commission
-      sale_amount_currency: 'USD',
-      commission_currency: 'USD',
-      payment_intent_id: event.data.payment_id,
-      is_subscription: false,
+      sale_amount_currency: event.data.currency,
       sales_status: 'complete',
+      is_subscription: Boolean(event.data.subscription_id),
     }),
   });
 
@@ -244,114 +295,72 @@ app.post('/webhooks/payment', async (req, res) => {
 });
 ```
 
-**Available referral statuses:** lead, trialing, customer, active, canceled, rejected
+Include `referral_id` on the first conversion event unless `customer_id` already maps to an existing Affonso referral. Once the billing customer has been linked, `customer_id` becomes a stable identifier for later renewals and updates.
 
-For complete API reference and cURL examples, read the [Custom Payment Provider API Guide](references/custom-payment-provider-api.md).
+## Step 6: Handle Refunds
 
-## Step 5: Handle Refunds
+For conversions created via `POST /conversions`, prefer:
 
-When a refund occurs, update the commission via the Affonso API.
-
-### Full Refund
-
-```javascript
-await fetch(`https://api.affonso.io/v1/commissions/${commissionId}`, {
-  method: 'PUT',
-  headers: {
-    'Authorization': 'Bearer sk_live_your_api_key',
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    sale_amount: 0,
-    commission_amount: 0,
-    sales_status: 'refunded',
-  }),
-});
+```bash
+curl -X POST "https://api.affonso.io/v1/conversions/conv_123/refund" \
+  -H "Authorization: Bearer sk_live_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "external_event_id": "refund_123",
+    "amount": 49.50,
+    "currency": "USD"
+  }'
 ```
 
-### Partial Refund
+If the integration uses manual `POST /commissions`, the backend must persist the created commission ID and update that commission manually as part of refund handling.
 
-```javascript
-await fetch(`https://api.affonso.io/v1/commissions/${commissionId}`, {
-  method: 'PUT',
-  headers: {
-    'Authorization': 'Bearer sk_live_your_api_key',
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    sale_amount: 49.50, // Remaining amount after refund
-    commission_amount: 9.90, // Recalculated commission
-    sales_status: 'partial_refunded',
-  }),
-});
+Example manual commission refund update:
+
+```bash
+curl -X PUT "https://api.affonso.io/v1/commissions/com_123" \
+  -H "Authorization: Bearer sk_live_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sale_amount": 49.50,
+    "commission_amount": 9.90,
+    "sales_status": "partial_refunded"
+  }'
 ```
 
-## Testing & Verification
+## Step 7: Verify The Integration
 
-### Test Tracking Script
+Test in this order:
 
-1. Visit the website with test parameter: `yoursite.com?atp=test`
-2. Open browser DevTools → Application → Cookies
-3. Verify `affonso_referral` cookie is set (unless consent mode is enabled and consent not given)
-4. Check Affonso dashboard for test entry
-
-### Test Webhook Integration
-
-1. Set up a test webhook endpoint (use tools like ngrok for local development)
-2. Trigger a test payment through your payment provider
-3. Verify the webhook receives the event with `affonso_referral` in metadata
-4. Check Affonso dashboard for the referral status update and commission creation
-
-### End-to-End Test
-
-1. Visit site with `?atp=test` parameter
-2. Complete a test purchase through your payment provider
-3. Check Affonso dashboard to verify the referral was updated and the commission was created
-4. Verify the test affiliate received credit for the sale
-
-### GDPR Consent Testing
-
-If using consent mode:
-1. Visit site with `?atp=test` - verify no cookie is set
-2. Accept cookies through consent banner - verify cookie is now set
-3. Navigate between pages - verify `affonso_id` parameter persists
-4. Complete purchase - verify tracking works
+1. Visit the site with `?atp=test`
+2. Confirm `affonso_referral` exists in cookies or `window.affonso_referral`
+3. Start checkout and verify the referral value is attached to checkout metadata
+4. Trigger the backend purchase event
+5. Confirm the Affonso API call succeeds
+6. Check the Affonso dashboard for the referral/conversion
+7. Trigger a refund and verify the downstream refund state in Affonso
 
 ## Troubleshooting
 
-### Cookie Not Set
-- Check that script is in `<head>` tag
-- Verify program ID is correct
-- If using consent mode, ensure `window.affonsoConsentGranted()` is called after user accepts
+### Referral Never Reaches The Backend
 
-### Payment Provider Not Receiving Referral Data
-- **Frontend**: Check that `window.affonso_referral` is defined before creating checkout
-- **Backend**: Verify the cookie is being read correctly from the request
-- Inspect Network tab for script loading errors
-- Ensure you are using the correct metadata field name for your provider
+- Check that the tracking script is loaded in `<head>`
+- Check consent-mode behavior if cookies are blocked until opt-in
+- Confirm the checkout metadata actually includes the referral value
 
-### Commission Not Created
-- Verify your Affonso API key is correct
-- Check that the referral ID is valid and exists in Affonso
-- Ensure the commission amount is calculated correctly
-- Check webhook logs for API response errors
+### Affonso Rejects The API Request
 
-### Tracking Not Appearing in Dashboard
-- Verify your API key has the correct permissions
-- Check that the webhook endpoint is publicly accessible
-- Ensure the payment completed successfully in your payment provider
+- Verify the API key
+- Verify the identifier resolves to an existing referral
+- Verify `sale_amount_currency` and similar required fields are present
+- Verify `external_event_id` stays stable on retries
+
+### Commissions Look Wrong
+
+- If the user wants automatic incentive logic, use `POST /conversions` instead of manual `POST /commissions`
+- If the user insists on manual commissions, confirm the backend's commission math and refund math
 
 ## Additional Resources
 
-For framework-specific implementation guidance, the user can check:
-- https://affonso.io/help/installation-guides (Next.js, React, Vue, WordPress, etc.)
-
-For detailed API documentation:
-- Read the [Custom Payment Provider API Guide](references/custom-payment-provider-api.md)
-
-## Next Steps
-
-After successful integration:
-1. Set up affiliate recruitment and program rules in Affonso dashboard
-2. Create affiliate resources (landing pages, promotional materials)
-3. Monitor performance and optimize commission structure
+- https://docs.affonso.io/api/server-side-tracking
+- https://affonso.io/help/integrations/custom/custom-payment-provider-api
+- https://affonso.io/help/installation-guides

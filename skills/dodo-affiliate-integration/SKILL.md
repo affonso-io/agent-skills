@@ -39,30 +39,34 @@ Before beginning implementation, gather the following information by asking the 
 
 ### Connect Payment Provider
 
-Before implementing the integration, the user must connect Dodo Payments to Affonso:
+If the user's Dodo Payments account is not already connected in Affonso, do this before implementing the integration:
 
 1. Go to https://affonso.io/app/affiliate-program/connect
 2. Enter their Dodo Payments API key
 3. After connecting, they will receive a webhook URL
 4. Add the webhook URL in their Dodo Payments dashboard
 
+If Dodo Payments is already connected, continue with the code changes and keep the existing webhook configuration in place.
+
 ## Workflow Decision Tree
 
 ```
-1. Install Tracking Script
+1. Connect Dodo Payments to Affonso if it is not connected yet
+
+2. Install Tracking Script
    ├─ Uses GTM? → See GTM Integration Guide
    ├─ Has Cookie Consent? → See GDPR Consent Guide
    └─ Neither → Direct script installation
 
-2. Track Signups (Optional)
+3. Track Signups (Optional)
    └─ Add signup tracking code
 
-3. Pass Data to Dodo Payments
+4. Pass Data to Dodo Payments
    ├─ Checkout API → See Dodo Checkout API Guide
    ├─ Payment Links → See Dodo Payment Links Guide
    └─ Don't Know → Help identify integration method
 
-4. Test Integration
+5. Test Integration
    └─ Verify tracking works end-to-end
 ```
 
@@ -237,7 +241,7 @@ If using consent mode:
 - Inspect Network tab for script loading errors
 
 ### Tracking Not Appearing in Dashboard
-- Ensure Dodo Payments is connected in Affonso dashboard at https://affonso.io/app/affiliate-program/connect
+- Ensure Dodo Payments is connected in Affonso dashboard at https://affonso.io/app/affiliate-program/connect. If not, connect it first before troubleshooting code paths.
 - Verify the webhook URL is added in Dodo Payments
 - For testing, use discount codes (test mode doesn't sync)
 - Check that the purchase completed successfully in Dodo Payments

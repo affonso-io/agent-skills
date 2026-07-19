@@ -40,25 +40,39 @@ Before beginning implementation, gather the following information by asking the 
 
 6. **Signup Tracking**: Ask "Do you want to track user signups in addition to purchases? (Recommended - provides better insights on affiliate performance)"
 
+## Connect Payment Provider
+
+If the user's Stripe account is not already connected in Affonso, tell them to do this before or alongside the code integration:
+
+1. Go to https://affonso.io/app/affiliate-program/connect
+2. Select Stripe
+3. Enter the Stripe API key
+4. Copy the webhook URL that Affonso provides
+5. Add that webhook URL in the Stripe dashboard
+
+If Stripe is already connected, continue with the code changes and keep the existing webhook connection in place.
+
 ## Workflow Decision Tree
 
 ```
-1. Install Tracking Script
+1. Connect Stripe to Affonso if it is not connected yet
+
+2. Install Tracking Script
    ├─ Uses GTM? → See GTM Integration Guide
    ├─ Has Cookie Consent? → See GDPR Consent Guide
    └─ Neither → Direct script installation
 
-2. Track Signups (Optional)
+3. Track Signups (Optional)
    └─ Add signup tracking code
 
-3. Pass Data to Stripe
+4. Pass Data to Stripe
    ├─ Checkout API → See Stripe Checkout API Guide
    ├─ Payment Links → See Payment Links Guide
    ├─ Buy Button → See Buy Button Guide
    ├─ Pricing Tables → See Pricing Tables Guide
    └─ Don't Know → Help identify integration method
 
-4. Test Integration
+5. Test Integration
    └─ Verify tracking works end-to-end
 ```
 
@@ -243,7 +257,7 @@ If using consent mode:
 - Inspect Network tab for script loading errors
 
 ### Tracking Not Appearing in Dashboard
-- Ensure Stripe account is connected in Affonso dashboard
+- Ensure Stripe is connected in Affonso dashboard. If not, connect it first at https://affonso.io/app/affiliate-program/connect and add the Affonso webhook in Stripe.
 - For testing, use live mode with discount codes (test mode doesn't sync)
 - Check that the purchase completed successfully in Stripe
 

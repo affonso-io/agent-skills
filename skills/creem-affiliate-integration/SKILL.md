@@ -39,12 +39,14 @@ Before beginning implementation, gather the following information by asking the 
 
 ### Connect Payment Provider
 
-Before implementing the integration, the user must connect Creem to Affonso:
+If the user's Creem account is not already connected in Affonso, do this before implementing the integration:
 
 1. Go to https://affonso.io/app/affiliate-program/connect
 2. Enter their Creem API key to connect the payment provider
 3. After connecting, they will receive a webhook URL
 4. Add this webhook URL in their Creem dashboard to enable event syncing
+
+If Creem is already connected, continue with the code changes and keep the webhook configuration intact.
 
 ## Workflow Decision Tree
 
@@ -242,7 +244,7 @@ If using consent mode:
 - Inspect Network tab for script loading errors
 
 ### Tracking Not Appearing in Dashboard
-- Ensure Creem account is connected in Affonso dashboard at https://affonso.io/app/affiliate-program/connect
+- Ensure Creem is connected in Affonso dashboard at https://affonso.io/app/affiliate-program/connect. If not, connect it first before debugging the code path.
 - Verify the webhook URL from Affonso is added in your Creem dashboard
 - For testing, use live mode with discount codes (test mode doesn't sync)
 - Check that the purchase completed successfully in Creem
