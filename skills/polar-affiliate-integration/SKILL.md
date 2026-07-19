@@ -40,14 +40,16 @@ Before beginning implementation, gather the following information by asking the 
 
 ## Connect Payment Provider
 
-Before implementing any tracking code, the user must connect Polar to their Affonso account:
+If the user's Polar account is not already connected in Affonso, do this before implementing any tracking code:
 
 1. Go to https://affonso.io/app/affiliate-program/connect/polar
 2. Enter your Polar API key
 3. After connecting, Affonso will provide a webhook URL
 4. Add this webhook URL in your Polar dashboard under webhook settings
 
-This step is required for Affonso to receive and attribute payments from Polar.
+If Polar is already connected, continue with the code changes and keep the webhook active.
+
+This dashboard connection is required for Affonso to receive and attribute payments from Polar.
 
 ## Workflow Decision Tree
 
@@ -231,7 +233,7 @@ If using consent mode:
 - Inspect Network tab for script loading errors
 
 ### Tracking Not Appearing in Dashboard
-- Ensure Polar account is connected in Affonso dashboard
+- Ensure Polar is connected in Affonso dashboard. If not, connect it first and verify the webhook URL is still active.
 - For testing, use live mode with discount codes (test mode doesn't sync)
 - Check that the purchase completed successfully in Polar
 - Verify the webhook URL is correctly configured in Polar

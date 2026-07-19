@@ -35,28 +35,32 @@ Before beginning implementation, gather the following information by asking the 
 
 ### Connect Paddle
 
-Before implementing, the user must connect their Paddle account:
+If the user's Paddle account is not already connected in Affonso, do this before implementing the code integration:
 
 1. Go to https://affonso.io/app/affiliate-program/connect/paddle
 2. Enter their Paddle API key
 3. After connecting, they will receive a webhook URL
 4. Add this webhook URL in Paddle's webhook settings
 
+If Paddle is already connected, continue with the code changes and keep the webhook configuration active.
+
 ## Workflow Decision Tree
 
 ```
-1. Install Tracking Script
+1. Connect Paddle to Affonso if it is not connected yet
+
+2. Install Tracking Script
    ├─ Uses GTM? → See GTM Integration Guide
    ├─ Has Cookie Consent? → See GDPR Consent Guide
    └─ Neither → Direct script installation
 
-2. Track Signups (Optional)
+3. Track Signups (Optional)
    └─ Add signup tracking code
 
-3. Pass Data to Paddle
+4. Pass Data to Paddle
    └─ Paddle Billing Checkout → See Paddle Billing Checkout Guide
 
-4. Test Integration
+5. Test Integration
    └─ Verify tracking works end-to-end
 ```
 
@@ -199,7 +203,7 @@ If using consent mode:
 - Inspect Network tab for script loading errors
 
 ### Tracking Not Appearing in Dashboard
-- Ensure Paddle account is connected in Affonso dashboard
+- Ensure Paddle is connected in Affonso dashboard. If not, connect it first and verify the webhook URL in Paddle.
 - For testing, use live mode with discount codes (sandbox mode doesn't sync)
 - Check that the purchase completed successfully in Paddle
 - Verify the webhook URL is correctly configured in Paddle

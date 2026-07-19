@@ -1,139 +1,93 @@
 # Custom Payment Provider API Integration
 
-Detailed guide for integrating Affonso affiliate tracking with any payment provider using the Affonso REST API.
+This reference file is the implementation layer for custom/backend-driven Affonso integrations.
 
-## Overview
+Use it after reading:
 
-When using a payment provider that is not natively supported by Affonso (such as Lemon Squeezy, Gumroad, Razorpay, Paystack, Xendit, Flutterwave, or a custom billing system), you must manually:
+- https://docs.affonso.io/api/server-side-tracking
+- `../SKILL.md`
 
-1. Pass the referral ID to your payment provider as metadata
-2. Handle payment webhooks to extract the referral ID
-3. Update referral status via the Affonso API
-4. Create commissions via the Affonso API
-5. Handle refunds by updating commissions
+## Endpoint Chooser
 
-**Important:** Affonso does NOT auto-calculate commissions for custom providers. You must calculate and submit commission amounts yourself.
-
-## Provider-Specific Metadata Fields
-
-Different payment providers use different field names for custom metadata. Use the correct field for your provider:
-
-| Provider | Metadata Field | Example |
+| Use case | Endpoint | Why |
 |---|---|---|
-| Lemon Squeezy | `custom_data` or `checkout_data.custom` | `custom_data: { affonso_referral: referralId }` |
-| Gumroad | `custom_fields` | `custom_fields: { affonso_referral: referralId }` |
-| Razorpay | `notes` | `notes: { affonso_referral: referralId }` |
-| Paystack | `metadata` | `metadata: { affonso_referral: referralId }` |
-| Xendit | `metadata` | `metadata: { affonso_referral: referralId }` |
-| Flutterwave | `meta` | `meta: { affonso_referral: referralId }` |
+| Purchase or renewal where Affonso should calculate commissions | `POST /conversions` | Best default for backend-driven revenue events |
+| Lead, trial, milestone, or conversion through one normalized event pipeline | `POST /events` | One ingestion path for multiple lifecycle events |
+| Exact commission known in advance | `POST /commissions` | Manual override or import-style flow |
+| Refund for a conversion created by Affonso | `POST /conversions/{id}/refund` | Preferred refund handling |
 
-For providers not listed above, consult your payment provider's documentation for how to attach custom metadata to a checkout session or payment.
+## Passing Referral Data Into Checkout
 
-## Step 1: Pass Referral ID to Payment Provider
-
-### Frontend Approach
-
-Read the referral ID from the global variable set by the Affonso tracking script and include it when creating a checkout:
+### Browser-created checkout
 
 ```javascript
-// The Affonso tracking script sets this global variable
-const referralId = window.affonso_referral;
+const referralId = window.affonso_referral || '';
 
-// Pass it as metadata when creating a checkout
-// (adjust the field name for your provider — see table above)
 createCheckout({
-  metadata: { affonso_referral: referralId }
+  metadata: {
+    affonso_referral: referralId,
+  },
 });
 ```
 
-### Backend Approach (Node.js)
-
-Read the `affonso_referral` cookie from the request and pass it to the payment provider server-side:
+### Server-created checkout
 
 ```javascript
-// Node.js / Express example
 const referralId = req.cookies['affonso_referral'] || '';
 
 const checkout = await paymentProvider.createCheckout({
-  // ... existing config
-  metadata: { affonso_referral: referralId }
+  metadata: {
+    affonso_referral: referralId,
+  },
 });
 ```
 
-### Backend Approach (Python)
+### Common metadata field names
 
-```python
-# Flask / Django example
-referral_id = request.cookies.get('affonso_referral', '')
+| Provider | Field |
+|---|---|
+| Lemon Squeezy | `custom_data` or `checkout_data.custom` |
+| Gumroad | `custom_fields` |
+| Razorpay | `notes` |
+| Paystack | `metadata` |
+| Xendit | `metadata` |
+| Flutterwave | `meta` |
 
-checkout = payment_provider.create_checkout(
-    # ... existing config
-    metadata={'affonso_referral': referral_id}
-)
-```
+## Preferred Identifier Strategy
 
-### Backend Approach (PHP)
+Prefer these in order:
 
-```php
-$referralId = $_COOKIE['affonso_referral'] ?? '';
+1. `external_user_id`
+2. `referral_id`
+3. `customer_id`
 
-$checkout = $paymentProvider->createCheckout([
-    // ... existing config
-    'metadata' => ['affonso_referral' => $referralId]
-]);
-```
+If the provider webhook exposes only its own customer or subscription identifiers, store the mapping when checkout is created.
 
-## Step 2: Handle Webhooks
+## Example: Conversion-Based Backend Flow
 
-Set up a webhook endpoint to receive payment events from your provider. When a payment succeeds, extract the referral ID and process it.
-
-### Webhook Handler (Node.js / Express)
+Use this when Affonso should apply program incentives and calculate commissions.
 
 ```javascript
 app.post('/webhooks/payment', async (req, res) => {
   const event = req.body;
 
-  // Extract referral ID from metadata (adjust path for your provider)
-  const referralId = event.data.metadata?.affonso_referral;
-
-  // No referral — not an affiliate sale, skip processing
-  if (!referralId) return res.json({ received: true });
-
-  // 1. Update referral status
-  await fetch(`https://api.affonso.io/v1/referrals/${referralId}`, {
-    method: 'PUT',
-    headers: {
-      'Authorization': 'Bearer sk_live_your_api_key',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      email: event.data.customer_email,
-      customer_id: event.data.customer_id,
-      status: 'customer',
-      name: event.data.customer_name,
-    }),
-  });
-
-  // 2. Create commission (calculate amount yourself)
-  const saleAmount = event.data.amount; // in your currency
-  const commissionRate = 0.20; // example: 20%
-  const commissionAmount = saleAmount * commissionRate;
-
-  await fetch('https://api.affonso.io/v1/commissions', {
+  await fetch('https://api.affonso.io/v1/conversions', {
     method: 'POST',
     headers: {
-      'Authorization': 'Bearer sk_live_your_api_key',
+      Authorization: `Bearer ${process.env.AFFONSO_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      referral_id: referralId,
-      sale_amount: saleAmount,
-      commission_amount: commissionAmount,
-      sale_amount_currency: 'USD',
-      commission_currency: 'USD',
-      payment_intent_id: event.data.payment_id, // unique payment identifier
-      is_subscription: false,
+      customer_id: event.data.customer_id,
+      referral_id: event.data.metadata?.affonso_referral,
+      external_event_id: event.data.id,
+      sale_amount: event.data.amount,
+      sale_amount_currency: event.data.currency,
       sales_status: 'complete',
+      is_subscription: Boolean(event.data.subscription_id),
+      interval: event.data.interval ?? undefined,
+      product_ids: event.data.product_ids ?? undefined,
+      price_ids: event.data.price_ids ?? undefined,
     }),
   });
 
@@ -141,200 +95,96 @@ app.post('/webhooks/payment', async (req, res) => {
 });
 ```
 
-## Step 3: Update Referral Status
+## Example: Normalized Events Flow
 
-Use the Affonso API to update a referral's status when a customer takes action (signs up, starts a trial, makes a purchase, etc.).
-
-### API Endpoint
-
-```
-PUT https://api.affonso.io/v1/referrals/{referralId}
-```
-
-### cURL Example
+Use this when the backend wants one unified pipeline.
 
 ```bash
-curl -X PUT "https://api.affonso.io/v1/referrals/{referralId}" \
+curl -X POST "https://api.affonso.io/v1/events" \
   -H "Authorization: Bearer sk_live_your_api_key" \
   -H "Content-Type: application/json" \
-  -d '{"email":"customer@example.com","customer_id":"cust_123","status":"customer","name":"John Doe"}'
+  -d '{
+    "event_name": "signup_completed",
+    "event_type": "lead",
+    "external_user_id": "usr_123",
+    "external_event_id": "evt_signup_123",
+    "metadata": {
+      "email": "customer@example.com"
+    }
+  }'
 ```
 
-### Available Statuses
-
-| Status | Description |
-|---|---|
-| `lead` | Visitor clicked an affiliate link |
-| `trialing` | Customer started a free trial |
-| `customer` | Customer made a purchase |
-| `active` | Customer has an active subscription |
-| `canceled` | Customer canceled their subscription |
-| `rejected` | Referral was rejected (fraud, self-referral, etc.) |
-
-## Step 4: Create Commission
-
-Use the Affonso API to create a commission when a referred customer makes a purchase.
-
-### API Endpoint
-
-```
-POST https://api.affonso.io/v1/commissions
+```bash
+curl -X POST "https://api.affonso.io/v1/events" \
+  -H "Authorization: Bearer sk_live_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event_name": "invoice_paid",
+    "event_type": "conversion",
+    "customer_id": "cust_123",
+    "external_event_id": "evt_invoice_123",
+    "sale_amount": 99,
+    "sale_amount_currency": "USD",
+    "is_subscription": true
+  }'
 ```
 
-### cURL Example
+## Example: Manual Commission Flow
+
+Use this only when the backend owns the commission math.
 
 ```bash
 curl -X POST "https://api.affonso.io/v1/commissions" \
   -H "Authorization: Bearer sk_live_your_api_key" \
   -H "Content-Type: application/json" \
-  -d '{"referral_id":"{referralId}","sale_amount":99.00,"commission_amount":19.80,"sale_amount_currency":"USD","commission_currency":"USD","payment_intent_id":"pi_unique_id","is_subscription":false,"sales_status":"complete"}'
+  -d '{
+    "referral_id": "ref_123",
+    "sale_amount": 99.00,
+    "commission_amount": 19.80,
+    "sale_amount_currency": "USD",
+    "commission_currency": "USD",
+    "payment_intent_id": "pay_123",
+    "is_subscription": false,
+    "sales_status": "complete"
+  }'
 ```
 
-### Request Body Fields
+## Refund Handling
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `referral_id` | string | Yes | The Affonso referral ID |
-| `sale_amount` | number | Yes | Total sale amount |
-| `commission_amount` | number | Yes | Commission amount to pay the affiliate |
-| `sale_amount_currency` | string | Yes | Currency code (e.g., "USD", "EUR") |
-| `commission_currency` | string | Yes | Currency code for the commission |
-| `payment_intent_id` | string | Yes | Unique payment identifier from your provider |
-| `is_subscription` | boolean | Yes | Whether this is a recurring subscription payment |
-| `sales_status` | string | Yes | Status of the sale (see below) |
-
-### Sales Status Values
-
-| Status | Description |
-|---|---|
-| `complete` | Payment was successful |
-| `refunded` | Full refund was issued |
-| `partial_refunded` | Partial refund was issued |
-
-## Step 5: Handle Refunds
-
-When a refund occurs, update the commission to reflect the refund.
-
-### Full Refund
+### Refund a conversion
 
 ```bash
-curl -X PUT "https://api.affonso.io/v1/commissions/{commissionId}" \
+curl -X POST "https://api.affonso.io/v1/conversions/conv_123/refund" \
   -H "Authorization: Bearer sk_live_your_api_key" \
   -H "Content-Type: application/json" \
-  -d '{"sale_amount":0,"commission_amount":0,"sales_status":"refunded"}'
+  -d '{
+    "external_event_id": "refund_123",
+    "refund_amount": 49.50,
+    "refund_currency": "USD"
+  }'
 ```
 
-### Partial Refund
+### Refund a manual commission
 
-```bash
-curl -X PUT "https://api.affonso.io/v1/commissions/{commissionId}" \
-  -H "Authorization: Bearer sk_live_your_api_key" \
-  -H "Content-Type: application/json" \
-  -d '{"sale_amount":49.50,"commission_amount":9.90,"sales_status":"partial_refunded"}'
-```
+If the original sale used `POST /commissions`, update that commission record manually in the user's refund handler.
 
-### Refund Webhook Handler (Node.js)
+## Idempotency
 
-```javascript
-app.post('/webhooks/refund', async (req, res) => {
-  const event = req.body;
-  const commissionId = event.data.commission_id; // You need to store this mapping
+Use a stable upstream identifier for `external_event_id`:
 
-  if (event.data.refund_type === 'full') {
-    await fetch(`https://api.affonso.io/v1/commissions/${commissionId}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': 'Bearer sk_live_your_api_key',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        sale_amount: 0,
-        commission_amount: 0,
-        sales_status: 'refunded',
-      }),
-    });
-  } else {
-    // Partial refund — recalculate amounts
-    const remainingAmount = event.data.amount_after_refund;
-    const commissionRate = 0.20;
+- order ID
+- invoice ID
+- payment event ID
+- refund event ID
 
-    await fetch(`https://api.affonso.io/v1/commissions/${commissionId}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': 'Bearer sk_live_your_api_key',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        sale_amount: remainingAmount,
-        commission_amount: remainingAmount * commissionRate,
-        sales_status: 'partial_refunded',
-      }),
-    });
-  }
+Reuse the exact same value when retrying.
 
-  res.json({ received: true });
-});
-```
+## Testing Checklist
 
-## Authentication
-
-All API requests require a Bearer token in the Authorization header:
-
-```
-Authorization: Bearer sk_live_your_api_key
-```
-
-You can find your API key in the Affonso dashboard at https://affonso.io/app/settings.
-
-## Error Handling
-
-The Affonso API returns standard HTTP status codes:
-
-| Code | Description |
-|---|---|
-| `200` | Success |
-| `400` | Bad request (check request body) |
-| `401` | Unauthorized (check API key) |
-| `404` | Resource not found (check referral/commission ID) |
-| `422` | Validation error (check required fields) |
-| `500` | Server error (retry the request) |
-
-### Recommended Error Handling
-
-```javascript
-const response = await fetch('https://api.affonso.io/v1/commissions', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer sk_live_your_api_key',
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(commissionData),
-});
-
-if (!response.ok) {
-  const error = await response.json();
-  console.error('Affonso API error:', response.status, error);
-  // Implement retry logic for 5xx errors
-}
-```
-
-## Testing
-
-### Test with cURL
-
-1. Create a test referral by visiting your site with `?atp=test`
-2. Note the referral ID from the Affonso dashboard
-3. Use the cURL examples above to test each API endpoint
-4. Verify results in the Affonso dashboard
-
-### Webhook Testing
-
-Use tools like ngrok or localtunnel to expose your local webhook endpoint for testing:
-
-```bash
-# Start ngrok
-ngrok http 3000
-
-# Use the ngrok URL as your webhook endpoint in your payment provider
-# e.g., https://abc123.ngrok.io/webhooks/payment
-```
+1. Load the site with `?atp=test`
+2. Confirm `affonso_referral` exists
+3. Confirm checkout metadata includes the referral value
+4. Trigger a real or test backend event
+5. Confirm the Affonso API request succeeds
+6. Confirm the dashboard shows the expected referral or conversion
+7. Trigger a refund event and verify downstream state
