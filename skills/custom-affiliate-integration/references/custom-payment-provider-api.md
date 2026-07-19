@@ -159,14 +159,14 @@ curl -X POST "https://api.affonso.io/v1/conversions/conv_123/refund" \
   -H "Content-Type: application/json" \
   -d '{
     "external_event_id": "refund_123",
-    "refund_amount": 49.50,
-    "refund_currency": "USD"
+    "amount": 49.50,
+    "currency": "USD"
   }'
 ```
 
 ### Refund a manual commission
 
-If the original sale used `POST /commissions`, update that commission record manually in the user's refund handler.
+If the original sale used `POST /commissions`, persist the returned commission ID when the sale is created and update that commission record manually in the user's refund handler.
 
 ## Idempotency
 

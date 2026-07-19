@@ -114,7 +114,7 @@ If the user requires consent mode, read [GDPR Consent Guide](references/gdpr-con
 
 ## Step 2: Track Signups When Useful
 
-If the user wants signup attribution in addition to paid conversions, add:
+If the user wants signup attribution in addition to paid conversions and already uses the browser pixel, add:
 
 ```javascript
 window.Affonso.signup({
@@ -125,6 +125,22 @@ window.Affonso.signup({
 ```
 
 Prefer including `externalUserId` when the product has a durable internal user ID. That same ID can later be reused for server-side events.
+
+If the user wants to record the signup from their backend instead of the browser, use `POST /v1/signups`. This endpoint is the server-side equivalent of `Affonso.signup()` and requires the original `click_id` from `POST /v1/clicks`:
+
+```bash
+curl -X POST "https://api.affonso.io/v1/signups" \
+  -H "Authorization: Bearer sk_live_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "click_id": "ref_clk_xyz789",
+    "email": "jane@example.com",
+    "external_user_id": "user_42",
+    "name": "Jane Doe"
+  }'
+```
+
+Use `POST /v1/signups` when the backend owns the signup event. Use `POST /events` only when the team wants a normalized event pipeline and the corresponding identifiers already resolve to the same referral in Affonso.
 
 ## Step 3: Pass Referral Data Through Checkout
 
@@ -263,6 +279,7 @@ app.post('/webhooks/payment', async (req, res) => {
     },
     body: JSON.stringify({
       customer_id: event.data.customer_id,
+      referral_id: event.data.metadata?.affonso_referral,
       external_event_id: event.data.id,
       sale_amount: event.data.amount,
       sale_amount_currency: event.data.currency,
@@ -275,7 +292,7 @@ app.post('/webhooks/payment', async (req, res) => {
 });
 ```
 
-If the provider does not expose `customer_id` yet, persist and forward the `affonso_referral` value captured during checkout and use `referral_id` instead.
+Include `referral_id` on the first conversion event unless `customer_id` already maps to an existing Affonso referral. Once the billing customer has been linked, `customer_id` becomes a stable identifier for later renewals and updates.
 
 ## Step 6: Handle Refunds
 
@@ -287,12 +304,12 @@ curl -X POST "https://api.affonso.io/v1/conversions/conv_123/refund" \
   -H "Content-Type: application/json" \
   -d '{
     "external_event_id": "refund_123",
-    "refund_amount": 49.50,
-    "refund_currency": "USD"
+    "amount": 49.50,
+    "currency": "USD"
   }'
 ```
 
-If the integration uses manual `POST /commissions`, the backend must update that commission manually as part of refund handling.
+If the integration uses manual `POST /commissions`, the backend must persist the created commission ID and update that commission manually as part of refund handling.
 
 ## Step 7: Verify The Integration
 
