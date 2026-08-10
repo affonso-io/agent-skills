@@ -1,0 +1,4 @@
+interface:
+  display_name: "Affiliate Compliance Monitor"
+  short_description: "Review partner traffic and policy compliance."
+  default_prompt: "Use $affiliate-compliance-monitor to assess affiliate compliance findings and recommend follow-up actions."

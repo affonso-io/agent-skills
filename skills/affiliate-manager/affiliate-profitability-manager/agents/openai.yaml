@@ -1,0 +1,4 @@
+interface:
+  display_name: "Affiliate Profitability Manager"
+  short_description: "Optimize affiliate decisions for contribution profit."
+  default_prompt: "Use $affiliate-profitability-manager to assess affiliate profitability and recommend safe commission changes."
