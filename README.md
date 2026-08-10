@@ -70,6 +70,27 @@ Use the Affonso CLI to manage affiliates, referrals, commissions, payouts, coupo
 "Show commissions for this month"
 ```
 
+### AI Affiliate Manager
+
+Operational skills for running a healthy affiliate program. They use the Affonso CLI for program data and always require explicit approval before changing payouts, commissions, partner status, groups, coupons, or program settings.
+
+| Skill | Focus |
+|-------|-------|
+| `/affiliate-fraud-review` | Evidence-based conversion and pending-payout screening |
+| `/affiliate-partner-qualification` | Applicant fit, policy, and risk assessment |
+| `/affiliate-performance-manager` | Performance analysis and prioritized account actions |
+| `/affiliate-profitability-manager` | Commission, margin, LTV, CAC, and payback decisions |
+| `/affiliate-partner-activation` | New-partner activation and dormant-partner re-engagement |
+| `/affiliate-campaign-manager` | Campaign planning, execution kit, and retrospective |
+| `/affiliate-compliance-monitor` | Brand, traffic, coupon, and disclosure compliance |
+
+```
+"Review open payouts for fraud risk before this payout cycle"
+"Which pending affiliate applications should I approve?"
+"Create an activation plan for our dormant high-potential partners"
+"Can we increase this affiliate's commission and still hit our contribution target?"
+```
+
 ### `/embedded-affiliate-dashboard`
 
 Embed Affonso's white-label affiliate dashboard into your web app via iframe. Includes framework examples for Next.js, Express, FastAPI, Rails, and Laravel.
@@ -86,6 +107,14 @@ agent-skills/
 ├── skills/
 │   ├── affonso-setup/                    # Auto-detect & full setup
 │   ├── affonso-cli/                      # CLI management (works with Claude Code + OpenClaw)
+│   ├── affiliate-manager/                 # AI affiliate manager suite
+│   │   ├── affiliate-fraud-review/        # Payout and conversion fraud triage
+│   │   ├── affiliate-partner-qualification/ # Applicant assessment
+│   │   ├── affiliate-performance-manager/   # Partner performance operations
+│   │   ├── affiliate-profitability-manager/ # Unit economics and commission decisions
+│   │   ├── affiliate-partner-activation/  # Activation and re-engagement
+│   │   ├── affiliate-campaign-manager/    # Campaign operations
+│   │   └── affiliate-compliance-monitor/  # Compliance remediation
 │   ├── stripe-affiliate-integration/     # Stripe
 │   ├── polar-affiliate-integration/      # Polar
 │   ├── dodo-affiliate-integration/       # Dodo Payments

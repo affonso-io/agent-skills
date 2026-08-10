@@ -1,0 +1,4 @@
+interface:
+  display_name: "Affiliate Performance Manager"
+  short_description: "Find performance insights and next actions."
+  default_prompt: "Use $affiliate-performance-manager to analyze affiliate performance and prioritize the next actions."

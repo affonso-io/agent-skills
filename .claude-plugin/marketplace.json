@@ -18,6 +18,13 @@
       "skills": [
         "./skills/affonso-setup",
         "./skills/affonso-cli",
+        "./skills/affiliate-manager/affiliate-fraud-review",
+        "./skills/affiliate-manager/affiliate-partner-qualification",
+        "./skills/affiliate-manager/affiliate-performance-manager",
+        "./skills/affiliate-manager/affiliate-profitability-manager",
+        "./skills/affiliate-manager/affiliate-partner-activation",
+        "./skills/affiliate-manager/affiliate-campaign-manager",
+        "./skills/affiliate-manager/affiliate-compliance-monitor",
         "./skills/stripe-affiliate-integration",
         "./skills/polar-affiliate-integration",
         "./skills/dodo-affiliate-integration",

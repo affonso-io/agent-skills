@@ -1,0 +1,4 @@
+interface:
+  display_name: "Affiliate Campaign Manager"
+  short_description: "Plan and run partner campaign operations."
+  default_prompt: "Use $affiliate-campaign-manager to prepare and manage an affiliate campaign."

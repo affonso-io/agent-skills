@@ -1,0 +1,4 @@
+interface:
+  display_name: "Affiliate Fraud Review"
+  short_description: "Review payout and conversion fraud risks."
+  default_prompt: "Use $affiliate-fraud-review to review pending payouts and recommend which require manual investigation."

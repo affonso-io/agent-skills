@@ -1,0 +1,4 @@
+interface:
+  display_name: "Partner Qualification"
+  short_description: "Assess affiliate applicant fit and risk."
+  default_prompt: "Use $affiliate-partner-qualification to review pending affiliate applications and recommend decisions."

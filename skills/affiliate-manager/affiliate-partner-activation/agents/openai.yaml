@@ -1,0 +1,4 @@
+interface:
+  display_name: "Partner Activation"
+  short_description: "Activate promising but inactive partners."
+  default_prompt: "Use $affiliate-partner-activation to identify inactive high-potential partners and draft activation outreach."
