@@ -17,7 +17,20 @@ npx skills add affonso-io/agent-skills --skill affonso-setup
 npx skills add affonso-io/agent-skills --list
 ```
 
-### Option 2: Claude Code Plugin
+### Option 2: Cursor Plugin
+
+After the plugin is listed in the Cursor Marketplace:
+
+1. Open **Customize** in Cursor.
+2. Search for **Affonso**, select **Install**, and choose user or project scope.
+3. Enter an Affonso API key when Cursor asks for it. Create a restricted key in **Affonso → Settings → API Keys** with only the scopes your workflow needs.
+4. Enable the **Affonso MCP** server from Customize and ask Cursor to use an Affonso skill or manage your program.
+
+The plugin installs all Affonso skills and connects Cursor to the hosted MCP server at `https://api.affonso.io/mcp`. Your API key is stored by Cursor as plugin configuration and is never committed to this repository.
+
+To test an unpublished checkout locally, symlink this repository into `~/.cursor/plugins/local/affonso-affiliate`, then run **Developer: Reload Window** in Cursor.
+
+### Option 3: Claude Code Plugin
 
 ```bash
 # Add the marketplace
@@ -27,7 +40,7 @@ npx skills add affonso-io/agent-skills --list
 /plugin install affiliate-skills@affiliate-skills
 ```
 
-### Option 3: Direct Link (No Installation)
+### Option 4: Direct Link (No Installation)
 
 Give any AI agent the raw GitHub URL to follow the instructions directly:
 
@@ -104,6 +117,9 @@ Embed Affonso's white-label affiliate dashboard into your web app via iframe. In
 ```
 agent-skills/
 ├── .claude-plugin/marketplace.json
+├── .cursor-plugin/plugin.json             # Cursor Marketplace manifest
+├── assets/logo_icon_affonso.png            # Cursor Marketplace logo
+├── mcp.json                                # Hosted Affonso MCP configuration
 ├── skills/
 │   ├── affonso-setup/                    # Auto-detect & full setup
 │   ├── affonso-cli/                      # CLI management (works with Claude Code + OpenClaw)
@@ -123,6 +139,29 @@ agent-skills/
 │   ├── custom-affiliate-integration/     # Any payment provider
 │   └── embedded-affiliate-dashboard/     # Embed dashboard
 ```
+
+## Cursor MCP
+
+The Cursor plugin configures the remote Affonso MCP server. It gives Cursor access to your Affonso affiliates, referrals, commissions, and payouts, subject to the scopes of the API key you provide. Cursor asks for approval before running MCP tools by default; review any write or destructive action before approving it.
+
+For a narrower setup without the plugin, add this to Cursor's `mcp.json` and set `AFFONSO_API_KEY` in your environment:
+
+```json
+{
+  "mcpServers": {
+    "affonso": {
+      "url": "https://api.affonso.io/mcp",
+      "headers": {
+        "Authorization": "Bearer ${env:AFFONSO_API_KEY}"
+      }
+    }
+  }
+}
+```
+
+## License
+
+[MIT](./LICENSE)
 
 ## Support
 

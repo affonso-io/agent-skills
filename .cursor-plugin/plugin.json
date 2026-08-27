@@ -1,0 +1,54 @@
+{
+  "name": "affonso-affiliate",
+  "displayName": "Affonso",
+  "version": "1.0.0",
+  "description": "Set up, manage, and grow an Affonso affiliate program with specialized agent skills and the Affonso MCP server.",
+  "author": {
+    "name": "Affonso",
+    "email": "support@affonso.io"
+  },
+  "homepage": "https://affonso.io",
+  "repository": "https://github.com/affonso-io/agent-skills",
+  "license": "MIT",
+  "logo": "assets/logo_icon_affonso.png",
+  "keywords": [
+    "affiliate-marketing",
+    "referrals",
+    "partner-program",
+    "revenue",
+    "mcp",
+    "affonso"
+  ],
+  "skills": [
+    "./skills/affonso-setup",
+    "./skills/affonso-cli",
+    "./skills/affiliate-manager/affiliate-fraud-review",
+    "./skills/affiliate-manager/affiliate-partner-qualification",
+    "./skills/affiliate-manager/affiliate-performance-manager",
+    "./skills/affiliate-manager/affiliate-profitability-manager",
+    "./skills/affiliate-manager/affiliate-partner-activation",
+    "./skills/affiliate-manager/affiliate-campaign-manager",
+    "./skills/affiliate-manager/affiliate-compliance-monitor",
+    "./skills/stripe-affiliate-integration",
+    "./skills/polar-affiliate-integration",
+    "./skills/dodo-affiliate-integration",
+    "./skills/creem-affiliate-integration",
+    "./skills/paddle-affiliate-integration",
+    "./skills/custom-affiliate-integration",
+    "./skills/embedded-affiliate-dashboard"
+  ],
+  "mcpServers": "./mcp.json",
+  "variables": {
+    "type": "object",
+    "properties": {
+      "AFFONSO_API_KEY": {
+        "type": "string",
+        "title": "Affonso API key",
+        "description": "An Affonso API key used to authenticate the Affonso MCP server. Create one in Affonso under Settings > API Keys."
+      }
+    },
+    "required": [
+      "AFFONSO_API_KEY"
+    ]
+  }
+}

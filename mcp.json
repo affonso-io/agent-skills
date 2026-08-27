@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "affonso": {
+      "url": "https://api.affonso.io/mcp",
+      "headers": {
+        "Authorization": "Bearer ${AFFONSO_API_KEY}"
+      }
+    }
+  }
+}
