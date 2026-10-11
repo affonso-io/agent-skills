@@ -27,6 +27,8 @@ Recommend affiliate actions that grow contribution profit, not merely attributed
    affonso commissions list --json --date-from YYYY-MM-DD --date-to YYYY-MM-DD --limit 100 --page 1
    ```
 
+   These commands show the first batch, not the complete dataset. Page through affiliates and commissions and follow referral cursors using the CLI reference. Preserve the requested filters and record extraction time, row counts, and any incomplete or failed pages. If the extraction is incomplete, label it partial and do not make portfolio-wide recommendations from it. Referral creation dates describe acquisition cohorts; do not use that filter to exclude older referred customers whose invoices or commissions fall within a period-based profitability report.
+
 3. Request or ingest the matching financial dataset. Start with the minimum viable inputs in the data contract; add cohort revenue, retention, and direct-partner costs for LTV/CAC or commission-headroom decisions.
 4. Reconcile data before calculating: join key, date timezone, currency conversion, refunded/chargeback treatment, commission status, customer eligibility, and possible duplicate rows. Stop and explain the discrepancy if totals cannot be reconciled.
 5. Calculate only metrics supported by the inputs. At a minimum, show net revenue after refunds, variable cost, affiliate cost, and contribution after affiliate cost. Use `attributed acquisition cost`, not CAC, unless the customer is verified as new and the required cost allocation is available.

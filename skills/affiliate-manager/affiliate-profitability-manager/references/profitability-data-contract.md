@@ -13,13 +13,13 @@ Provide the reporting timezone, currency, date range, revenue-recognition basis 
 | `affiliate_id` | Affonso affiliate identifier | Affonso |
 | `customer_id` or cohort key | Privacy-safe stable join key | Billing/warehouse |
 | `period_start`, `period_end` | Reported period or cohort window | All sources |
-| `gross_revenue` | Revenue before discounts, tax, refunds, and chargebacks | Billing |
+| `gross_revenue` | Normalized amount before discounts and reversals, including tax only when it is included in the corresponding billing total | Billing |
 | `discount_amount`, `tax_amount` | Reductions excluded from net collected revenue | Billing |
 | `refund_amount`, `chargeback_amount` | Reversals recognized in the selected period | Billing |
 | `cogs`, `payment_processing_fees`, `other_variable_cost` | Incremental cost to serve | Finance/warehouse |
 | `affiliate_commission_accrued` | Attributed commission, with status | Affonso/billing |
 
-Compute `net_collected_revenue = gross_revenue - discount_amount - tax_amount - refund_amount - chargeback_amount`. Do not subtract a cost twice if the accounting source already supplies net revenue or net margin.
+Compute `net_collected_revenue = gross_revenue - discount_amount - tax_amount - refund_amount - chargeback_amount` only after mapping the source export. Subtract tax or discounts only if they are included in the mapped gross amount. If refunds or chargebacks include tax, split out the revenue reversal so tax is not removed twice. Deduplicate overlapping refund and chargeback reversals for the same transaction. If the accounting source already supplies net revenue or net margin, reconcile to that basis rather than subtracting the same reductions again. Keep cash collected and recognized revenue separate: the formula above is a collected-revenue bridge, not a universal recognition rule.
 
 ## Inputs for stronger decisions
 
@@ -48,6 +48,15 @@ Use these consistently and label the horizon and scope.
 | Maximum incremental commission | Contribution before affiliate cost − target contribution after affiliate cost − existing affiliate cost |
 
 Do not call attributed customers incremental. Attribution answers who received credit; incrementality requires a credible counterfactual.
+
+For zero or negative net revenue, report contribution amounts and label the contribution-margin percentage not meaningful rather than dividing or treating the sign as improved performance. If there are no verified new customers, acquisition cost is unavailable, not zero. LTV:CAC requires a positive, supported acquisition-cost denominator. Negative commission headroom means the target is already missed; it is not an available incentive budget.
+
+### Mapping examples
+
+- Tax-inclusive sale 110, including tax 10, with no other reductions: net revenue 100.
+- Tax-exclusive revenue 100 with tax 10 stored separately: net revenue remains 100; do not subtract the separate tax again.
+- Full refund of the tax-inclusive sale above: refund 110 contains revenue reversal 100 and tax reversal 10; mapped net revenue is 110 - 10 - 100 = 0. Do not also count a chargeback that reverses the same sale.
+- Existing referred customer acquired before the reporting period pays an invoice during it: include that invoice for a period contribution report, but do not count the customer as newly acquired in that period.
 
 ## Validation checklist
 
