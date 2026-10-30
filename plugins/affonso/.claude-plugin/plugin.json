@@ -1,0 +1,26 @@
+{
+  "name": "affonso",
+  "displayName": "Affonso",
+  "version": "1.0.0",
+  "description": "Review affiliate performance, assess partners, and prepare payout reviews with live Affonso data.",
+  "author": {
+    "name": "Affonso",
+    "email": "silvestro@affonso.io",
+    "url": "https://affonso.io"
+  },
+  "homepage": "https://affonso.io/agents/mcp",
+  "repository": "https://github.com/affonso-io/agent-skills",
+  "license": "MIT",
+  "keywords": [
+    "affonso",
+    "affiliates",
+    "partners",
+    "commissions",
+    "payouts"
+  ],
+  "icon": "./assets/logo.png",
+  "documentationUrl": "https://docs.affonso.io/mcp/introduction",
+  "supportUrl": "https://affonso.io/help",
+  "privacyPolicyUrl": "https://affonso.io/privacy",
+  "termsOfServiceUrl": "https://affonso.io/terms"
+}

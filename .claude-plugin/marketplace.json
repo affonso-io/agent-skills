@@ -6,8 +6,7 @@
   },
   "metadata": {
     "description": "A collection of Claude Code skills to simplify affiliate program management and integration",
-    "version": "1.0.0",
-    "repository": "https://github.com/affonso-io/agent-skills"
+    "version": "1.1.0"
   },
   "plugins": [
     {
@@ -33,6 +32,11 @@
         "./skills/custom-affiliate-integration",
         "./skills/embedded-affiliate-dashboard"
       ]
+    },
+    {
+      "name": "affonso",
+      "source": "./plugins/affonso",
+      "description": "Review affiliate performance, assess partners, and prepare payout reviews with live Affonso data."
     }
   ]
 }
