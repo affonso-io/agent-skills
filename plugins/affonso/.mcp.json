@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "affonso": {
+      "type": "http",
+      "url": "https://api.affonso.io/mcp"
+    }
+  }
+}

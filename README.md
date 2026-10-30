@@ -32,13 +32,20 @@ To test an unpublished checkout locally, symlink this repository into `~/.cursor
 
 ### Option 3: Claude Code Plugin
 
+The `affonso` plugin connects to the hosted MCP server through OAuth and provides read-only program reports, partner reviews, and payout reviews. The `affiliate-skills` plugin contains the existing CLI and integration skills.
+
 ```bash
 # Add the marketplace
 /plugin marketplace add affonso-io/agent-skills
 
-# Install the plugin
+# Install the MCP plugin
+/plugin install affonso@affiliate-skills
+
+# Or install the CLI and integration skills
 /plugin install affiliate-skills@affiliate-skills
 ```
+
+After installing `affonso`, open `/mcp` and authenticate its Affonso connection. See the [Affonso plugin guide](./plugins/affonso/README.md) for requirements, example prompts, and data handling. A listing in Anthropic's directory requires a separate review.
 
 ### Option 4: Direct Link (No Installation)
 
